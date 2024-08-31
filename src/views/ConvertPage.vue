@@ -9,6 +9,9 @@ const amountFrom = ref(1);
 const amountTo = ref(0);
 const rates = ref<{ [key: string]: number }>({});
 
+const amountFromError = ref<string | null>(null); // ошибка для amountFrom
+const amountToError = ref<string | null>(null); // ошибка для amountTo
+
 const getRates = async () => {
   try {
     const response = await fetch(`https://status.neuralgeneration.com/api/currency`);
@@ -24,6 +27,24 @@ const getRates = async () => {
   }
 };
 
+const validateAndConvertTo = () => {
+  if (isNaN(Number(amountFrom.value))) {
+    amountFromError.value = "Введите числовое значение.";
+  } else {
+    amountFromError.value = null;
+    convertTo();
+  }
+};
+
+const validateAndConvertFrom = () => {
+  if (isNaN(Number(amountTo.value))) {
+    amountToError.value = "Введите числовое значение.";
+  } else {
+    amountToError.value = null;
+    convertFrom();
+  }
+};
+
 const convertTo = () => {
   if (rates.value[currencyTo.value]) {
     amountTo.value = parseFloat((amountFrom.value * rates.value[currencyTo.value] / rates.value[currencyFrom.value]).toFixed(2));
@@ -36,8 +57,8 @@ const convertFrom = () => {
   }
 };
 
-watch(currencyFrom, convertTo);
-watch(currencyTo, convertTo);
+watch(currencyFrom, validateAndConvertTo);
+watch(currencyTo, validateAndConvertTo);
 
 onMounted(getRates);
 </script>
@@ -54,12 +75,20 @@ onMounted(getRates);
           class="max-w-24"
           :options="currencies"
         />
-        <input
-          v-model.number="amountFrom"
-          type="number"
-          class="border p-2 rounded w-full"
-          @input="convertTo"
-        >
+        <div class="w-full">
+          <input
+            v-model="amountFrom"
+            type="text"
+            class="border p-2 rounded w-full"
+            @input="validateAndConvertTo"
+          >
+          <p
+            v-if="amountFromError"
+            class="text-red-500 text-sm"
+          >
+            {{ amountFromError }}
+          </p>
+        </div>
       </div>
       <div class="flex gap-4">
         <CustomSelect
@@ -67,12 +96,20 @@ onMounted(getRates);
           class="max-w-24"
           :options="currencies"
         />
-        <input
-          v-model.number="amountTo"
-          type="number"
-          class="border p-2 rounded w-full"
-          @input="convertFrom"
-        >
+        <div class="w-full">
+          <input
+            v-model="amountTo"
+            type="text"
+            class="border p-2 rounded w-full"
+            @input="validateAndConvertFrom"
+          >
+          <p
+            v-if="amountToError"
+            class="text-red-500 text-sm"
+          >
+            {{ amountToError }}
+          </p>
+        </div>
       </div>
     </div>
   </div>
